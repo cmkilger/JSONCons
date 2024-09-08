@@ -107,6 +107,26 @@ __attribute__((objc_subclassing_restricted))
 /// - Returns: A `JCJSON` instance if parsing is successful, or `nil` if an error occurs.
 - (nullable instancetype)initWithData:(nonnull NSData *)data error:(NSError * _Nullable * _Nullable)error;
 
+/// Initializes a `JCJSON` object with the provided JSON string.
+///
+/// This initializer parses a JSON string into a valid JSON structure and stores it within a `JCJSON` object.
+/// The provided `NSString` will be automatically converted to a UTF-8 encoded C string before parsing.
+///
+/// - Parameters:
+///   - string: A valid `NSString` representing JSON data. The string will be converted to a UTF-8 encoded C string
+///             for parsing.
+///   - error: A pointer to an error object that will be set if parsing the JSON string fails.
+///            If an error occurs, `error` will contain detailed information about the issue.
+///            Pass `nil` if you do not want to capture any errors.
+/// - Returns: A `JCJSON` instance if the string is successfully parsed and initialized, or `nil` if an error occurs.
+///
+/// - Note: If the JSON string is invalid or cannot be parsed, an `NSError` with the `JCJSONErrorFailedToParseJSON` code
+///         will be provided via the error pointer. The error message will include details about the failure.
+///
+/// - Important: The `NSString` is converted to a UTF-8 encoded C string using the `[NSString UTF8String]` method
+///              before being passed to the underlying parser. Ensure the `NSString` is valid and well-formed for this conversion.
+- (nullable instancetype)initWithJSONString:(nonnull NSString *)string error:(NSError * _Nullable * _Nullable)error;
+
 /// Queries the JSON structure using a JSONPath query string.
 ///
 /// This method allows you to extract one or more JSON values based on a JSONPath query string.

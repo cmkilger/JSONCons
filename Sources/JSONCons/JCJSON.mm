@@ -49,6 +49,23 @@ NSString * const JCJSONErrorDomain = @"JCJSONErrorDomain";
     return self;
 }
 
+- (nullable instancetype)initWithJSONString:(nonnull NSString *)string error:(NSError * _Nullable * _Nullable)error {
+    self = [super init];
+    if (self) {
+        try {
+            self.json = jsoncons::json::parse([string UTF8String]);
+        } catch (const std::exception& e) {
+            if (error) {
+                NSString *errorDescription = [NSString stringWithFormat:@"Error parsing JSON: %s", e.what()];
+                NSDictionary *userInfo = @{ NSLocalizedDescriptionKey : errorDescription };
+                *error = [NSError errorWithDomain:JCJSONErrorDomain code:JCJSONErrorFailedToParseJSON userInfo:userInfo];
+            }
+            return nil;
+        }
+    }
+    return self;
+}
+
 - (JCJSONType)type {
     switch (_json.type()) {
         case jsoncons::json_type::null_value:

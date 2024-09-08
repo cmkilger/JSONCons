@@ -2,7 +2,7 @@
 
 **JSONCons** is a Swift package for working with JSON data using Objective-C and Swift. It provides an easy way to parse, query, and extract values from JSON structures using JSONPath queries.
 
-This package includes an Objective-C class, `JCJSON`, which represents a parsed JSON structure and allows for efficient querying and manipulation of JSON data.
+This package includes an Objective-C class, `JCJSON` (`JSON` in Swift), which represents a parsed JSON structure and allows for efficient querying and manipulation of JSON data.
 
 ## Features
 

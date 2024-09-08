@@ -1,15 +1,27 @@
 import Testing
 @testable import JSONCons
 
-@Test func parseSuccess() async throws {
+@Test func parseDataSuccess() async throws {
     #expect(throws: Never.self) {
         try JSON(data: #"{"key": "value"}"#.data(using: .utf8)!)
     }
 }
 
-@Test func parseFailure() async throws {
+@Test func parseDataFailure() async throws {
     #expect(throws: NSError.self) {
         try JSON(data: #"{"key"}"#.data(using: .utf8)!)
+    }
+}
+
+@Test func parseStringSuccess() async throws {
+    #expect(throws: Never.self) {
+        try JSON(jsonString: #"{"key": "value"}"#)
+    }
+}
+
+@Test func parseStringFailure() async throws {
+    #expect(throws: NSError.self) {
+        try JSON(jsonString: #"{"key"}"#)
     }
 }
 
