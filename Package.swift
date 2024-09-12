@@ -16,10 +16,9 @@ let package = Package(
         .target(
             name: "JSONCons",
             exclude: [
-                "jsoncons"
+                "jsoncons",
             ],
-            cxxSettings: [
-                .unsafeFlags(["-std=c++11"]),
+            cSettings: [
                 .headerSearchPath("jsoncons/include"),
             ]
         ),
@@ -29,5 +28,6 @@ let package = Package(
                 "JSONCons",
             ]
         ),
-    ]
+    ],
+    cxxLanguageStandard: .cxx11
 )

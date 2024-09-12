@@ -25,6 +25,67 @@ import Testing
     }
 }
 
+@Test func createNull() async throws {
+    let json = JSON.null()
+    #expect(json.type == .null)
+}
+
+@Test func createBooleanTrue() async throws {
+    let json = JSON(booleanValue: true)
+    #expect(json.type == .boolean)
+    #expect(json.booleanValue == true)
+}
+
+@Test func createBooleanFalse() async throws {
+    let json = JSON(booleanValue: false)
+    #expect(json.type == .boolean)
+    #expect(json.booleanValue == false)
+}
+
+@Test func createInteger() async throws {
+    let json = JSON(integerValue: 42)
+    #expect(json.type == .integer)
+    #expect(json.integerValue == 42)
+}
+
+@Test func createDouble() async throws {
+    let json = JSON(doubleValue: 1.2)
+    #expect(json.type == .double)
+    #expect(json.doubleValue == 1.2)
+}
+
+@Test func createString() async throws {
+    let json = JSON(stringValue: "hello")
+    #expect(json.type == .string)
+    #expect(json.stringValue == "hello")
+}
+
+@Test func createArray() async throws {
+    let json = JSON(arrayValue: [
+        JSON(stringValue: "a"),
+        JSON(stringValue: "b"),
+    ])
+    #expect(json.type == .array)
+    
+    let arrayValue = json.arrayValue
+    #expect(arrayValue?.count == 2)
+    #expect(arrayValue?.first?.stringValue == "a")
+    #expect(arrayValue?.last?.stringValue == "b")
+}
+
+@Test func createObject() async throws {
+    let json = JSON(objectValue: [
+        "a": JSON(integerValue: 1),
+        "b": JSON(integerValue: 2),
+    ])
+    #expect(json.type == .object)
+    
+    let objectValue = json.objectValue
+    #expect(objectValue?.count == 2)
+    #expect(objectValue?["a"]?.integerValue == 1)
+    #expect(objectValue?["b"]?.integerValue == 2)
+}
+
 @Test func queryNull() async throws {
     let json = try JSON(data: #"{"key": [0, null]}"#.data(using: .utf8)!)
     let result = try json.query("$.key[1]")

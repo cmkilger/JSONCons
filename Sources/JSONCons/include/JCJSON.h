@@ -30,7 +30,7 @@ typedef NS_ENUM(NSInteger, JCJSONError) {
 /// The types of JSON values that can be encountered.
 ///
 /// This enum defines the possible types for values in a JSON structure.
-typedef NS_ENUM(NSInteger, JCJSONType) {
+typedef NS_CLOSED_ENUM(NSInteger, JCJSONType) {
     /// Represents a `null` value in JSON.
     /// - Swift equivalent: `JSONType.null`
     JCJSONTypeNull NS_SWIFT_NAME(null),
@@ -74,6 +74,9 @@ __attribute__((objc_subclassing_restricted))
 ///
 /// - SeeAlso: `JCJSONType` for the full list of possible types.
 @property (assign, readonly) JCJSONType type;
+
+/// The `null` value if this JSON object represents `null`, otherwise `nil`.
+@property (strong, readonly, nonnull) id value;
 
 /// The `null` value if this JSON object represents `null`, otherwise `nil`.
 @property (strong, readonly, nullable) NSNull *nullValue;
@@ -126,6 +129,57 @@ __attribute__((objc_subclassing_restricted))
 /// - Important: The `NSString` is converted to a UTF-8 encoded C string using the `[NSString UTF8String]` method
 ///              before being passed to the underlying parser. Ensure the `NSString` is valid and well-formed for this conversion.
 - (nullable instancetype)initWithJSONString:(nonnull NSString *)string error:(NSError * _Nullable * _Nullable)error;
+
+/// Creates a `JCJSON` object representing a `null` value in JSON.
+///
+/// - Returns: A `JCJSON` instance with a `null` value.
++ (nonnull instancetype)null;
+
+/// Initializes a `JCJSON` object with a boolean value.
+///
+/// - Parameter value: The boolean value (`true` or `false`) to initialize the object with.
+/// - Returns: A `JCJSON` instance representing the boolean value.
+- (nonnull instancetype)initWithBooleanValue:(BOOL)value;
+
+/// Initializes a `JCJSON` object with an integer value.
+///
+/// - Parameter value: The integer value to initialize the object with.
+/// - Returns: A `JCJSON` instance representing the integer value.
+- (nonnull instancetype)initWithIntegerValue:(NSInteger)value;
+
+/// Initializes a `JCJSON` object with a double or floating-point value.
+///
+/// - Parameter value: The double value to initialize the object with.
+/// - Returns: A `JCJSON` instance representing the double value.
+- (nonnull instancetype)initWithDoubleValue:(double)value;
+
+/// Initializes a `JCJSON` object with a string value.
+///
+/// - Parameter value: The string to initialize the object with.
+/// - Returns: A `JCJSON` instance representing the string value.
+- (nonnull instancetype)initWithStringValue:(nonnull NSString *)value;
+
+/// Initializes a `JCJSON` object with an array of `JCJSON` values.
+///
+/// - Parameter value: The array of `JCJSON` objects to initialize the object with.
+/// - Returns: A `JCJSON` instance representing the array value.
+- (nonnull instancetype)initWithArrayValue:(nonnull NSArray<JCJSON *> *)value;
+
+/// Initializes a `JCJSON` object with a dictionary of key-value pairs, where keys are strings and values are `JCJSON` objects.
+///
+/// - Parameter value: The dictionary of key-value pairs to initialize the object with.
+/// - Returns: A `JCJSON` instance representing the object (dictionary) value.
+- (nonnull instancetype)initWithObjectValue:(nonnull NSDictionary<NSString *, JCJSON *> *)value;
+
+/// Serializes the JSON structure into `NSData`.
+///
+/// This method converts the `JCJSON` object into raw JSON data, which can then be saved to a file,
+/// transmitted over a network, or processed further. The serialized data is in a format that can be
+/// understood by JSON parsers or deserialized back into a `JCJSON` object.
+///
+/// - Returns: A `NSData` object containing the serialized JSON data.
+///            If the JSON structure is invalid or cannot be serialized, this method may return `nil`.
+- (nonnull NSData *)serializedData;
 
 /// Queries the JSON structure using a JSONPath query string.
 ///
