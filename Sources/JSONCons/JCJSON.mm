@@ -231,7 +231,7 @@ NSString * const JCJSONErrorDomain = @"JCJSONErrorDomain";
         return [[JCJSON alloc] initWithJSON:result];
     } catch (const std::exception& e) {
         if (error) {
-            NSString *errorDescription = [[NSString alloc] initWithFormat:@"path: '%@' failed: ", string, [[NSString alloc] initWithUTF8String:e.what()]];
+            NSString *errorDescription = [[NSString alloc] initWithFormat:@"path: '%@' failed: %@", string, [[NSString alloc] initWithUTF8String:e.what()]];
             NSDictionary *userInfo = @{ NSLocalizedDescriptionKey : errorDescription };
             *error = [NSError errorWithDomain:JCJSONErrorDomain code:JCJSONErrorFailedToQueryJSON userInfo:userInfo];
         }
