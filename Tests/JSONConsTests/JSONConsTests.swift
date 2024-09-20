@@ -182,3 +182,175 @@ import Testing
     #expect(objectValue?.values.first?.type == .integer)
     #expect(objectValue?.values.first?.integerValue == 2)
 }
+
+@Test func equalNull() async throws {
+    let a = JSON.null()
+    let b = JSON.null()
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func equalBooleanTrue() async throws {
+    let a = JSON(booleanValue: true)
+    let b = JSON(booleanValue: true)
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func equalBooleanFalse() async throws {
+    let a = JSON(booleanValue: false)
+    let b = JSON(booleanValue: false)
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualBoolean() async throws {
+    let a = JSON(booleanValue: true)
+    let b = JSON(booleanValue: false)
+    #expect(a != b)
+    #expect(a.hashValue != b.hashValue)
+}
+
+@Test func equalInteger() async throws {
+    let a = JSON(integerValue: 4)
+    let b = JSON(integerValue: 4)
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualInteger() async throws {
+    let a = JSON(integerValue: 4)
+    let b = JSON(integerValue: 5)
+    #expect(a != b)
+    #expect(a.hashValue != b.hashValue)
+}
+
+@Test func equalDouble() async throws {
+    let a = JSON(doubleValue: 1.2)
+    let b = JSON(doubleValue: 1.2)
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualDouble() async throws {
+    let a = JSON(doubleValue: 1.2)
+    let b = JSON(doubleValue: 2.1)
+    #expect(a != b)
+    #expect(a.hashValue != b.hashValue)
+}
+
+@Test func equalString() async throws {
+    let a = JSON(stringValue: "Hello")
+    let b = JSON(stringValue: "Hello")
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualString() async throws {
+    let a = JSON(stringValue: "Hello")
+    let b = JSON(stringValue: "Goodbye")
+    #expect(a != b)
+    #expect(a.hashValue != b.hashValue)
+}
+
+@Test func equalArray() async throws {
+    let a = JSON(arrayValue: [
+        JSON(stringValue: "Hello"),
+        JSON(stringValue: "World"),
+    ])
+    let b = JSON(arrayValue: [
+        JSON(stringValue: "Hello"),
+        JSON(stringValue: "World"),
+    ])
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualArray() async throws {
+    let a = JSON(arrayValue: [
+        JSON(stringValue: "Hello"),
+        JSON(stringValue: "World"),
+    ])
+    let b = JSON(arrayValue: [
+        JSON(stringValue: "Hello"),
+        JSON(stringValue: "Goodbye"),
+    ])
+    #expect(a != b)
+    #expect(a.hashValue != b.hashValue)
+}
+
+@Test func equalObject() async throws {
+    let a = JSON(arrayValue: [
+        JSON(stringValue: "Hello"),
+        JSON(stringValue: "World"),
+    ])
+    let b = JSON(arrayValue: [
+        JSON(stringValue: "Hello"),
+        JSON(stringValue: "World"),
+    ])
+    #expect(a == b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualObject() async throws {
+    let a = JSON(objectValue: [
+        "a": JSON(stringValue: "Hello"),
+        "b": JSON(stringValue: "World"),
+    ])
+    let b = JSON(objectValue: [
+        "a": JSON(stringValue: "Hello"),
+        "b": JSON(stringValue: "Goodbye"),
+    ])
+    #expect(a != b)
+    #expect(a.hashValue != b.hashValue)
+}
+
+@Test func notEqualDeepArray() async throws {
+    let a = JSON(arrayValue: [
+        JSON(arrayValue: [
+            JSON(integerValue: 1),
+            JSON(integerValue: 2),
+        ]),
+        JSON(arrayValue: [
+            JSON(integerValue: 3),
+            JSON(integerValue: 4),
+        ])
+    ])
+    let b = JSON(arrayValue: [
+        JSON(arrayValue: [
+            JSON(integerValue: 5),
+            JSON(integerValue: 6),
+        ]),
+        JSON(arrayValue: [
+            JSON(integerValue: 7),
+            JSON(integerValue: 8),
+        ])
+    ])
+    #expect(a != b)
+    #expect(a.hashValue == b.hashValue)
+}
+
+@Test func notEqualDeepObject() async throws {
+    let a = JSON(objectValue: [
+        "a": JSON(objectValue: [
+            "c": JSON(integerValue: 1),
+            "d": JSON(integerValue: 2),
+        ]),
+        "b": JSON(objectValue: [
+            "e": JSON(integerValue: 3),
+            "f": JSON(integerValue: 4),
+        ])
+    ])
+    let b = JSON(objectValue: [
+        "a": JSON(objectValue: [
+            "c": JSON(integerValue: 5),
+            "d": JSON(integerValue: 6),
+        ]),
+        "b": JSON(objectValue: [
+            "e": JSON(integerValue: 7),
+            "f": JSON(integerValue: 8),
+        ])
+    ])
+    #expect(a != b)
+    #expect(a.hashValue == b.hashValue)
+}

@@ -11,6 +11,9 @@
 #import <jsoncons/json_filter.hpp>
 #import <jsoncons_ext/jsonpath/jsonpath.hpp>
 
+#include <functional> // For std::hash
+#include <string_view> // For std::string_view
+
 NSString * const JCJSONErrorDomain = @"JCJSONErrorDomain";
 
 @interface JCJSON ()
@@ -237,6 +240,84 @@ NSString * const JCJSONErrorDomain = @"JCJSONErrorDomain";
         }
         return nil;
     }
+}
+
+- (BOOL)isEqual:(id)other {
+    if (other == self) {
+        return YES;
+    } else if ([other isKindOfClass:[JCJSON class]]) {
+        return _json == ((JCJSON *)other)->_json;
+    } else {
+        return NO;
+    }
+}
+
+// Helper function for combining hash values
+static inline size_t hash_combine(size_t seed, size_t value) {
+    return seed ^ (value + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+}
+
+// Static inline function to hash a json value, limited to one level deep
+static inline size_t hash_json(const jsoncons::json& j, int depth) {
+    switch (j.type()) {
+        case jsoncons::json_type::bool_value:
+            return j.as_bool() ? 1 : 0;
+
+        case jsoncons::json_type::int64_value:
+            return std::hash<int64_t>()(j.as_integer<int64_t>());
+
+        case jsoncons::json_type::uint64_value:
+            return std::hash<uint64_t>()(j.as_integer<uint64_t>());
+
+        case jsoncons::json_type::half_value:
+        case jsoncons::json_type::double_value:
+            return std::hash<double>()(j.as_double());
+
+        case jsoncons::json_type::string_value: {
+            const std::string& str = j.as_string();
+            return std::hash<std::string_view>()(std::string_view(str.c_str(), str.size()));
+        }
+
+        case jsoncons::json_type::byte_string_value: {
+            const auto& byte_string = j.as_byte_string();
+            return std::hash<std::string_view>()(std::string_view(reinterpret_cast<const char*>(byte_string.data()), byte_string.size()));
+        }
+
+        case jsoncons::json_type::array_value: {
+            if (depth == 1) {
+                return std::hash<size_t>()(j.size());
+            } else {
+                size_t seed = 0;
+                for (const auto& item : j.array_range()) {
+                    seed = hash_combine(seed, hash_json(item, depth + 1));
+                }
+                return seed;
+            }
+        }
+
+        case jsoncons::json_type::object_value: {
+            if (depth == 1) {
+                return std::hash<size_t>()(j.size());
+            } else {
+                size_t object_hash = 0;
+                for (const auto& item : j.object_range()) {
+                    const std::string& key = item.key();
+                    size_t key_hash = std::hash<std::string_view>()(std::string_view(key.c_str(), key.size()));
+                    size_t value_hash = hash_json(item.value(), depth + 1);
+                    size_t key_value_hash = hash_combine(key_hash, value_hash);
+                    object_hash ^= key_value_hash; // XOR makes it order-independent
+                }
+                return object_hash;
+            }
+        }
+
+        default:
+            return 0; // Null and unexpected types
+    }
+}
+
+- (NSUInteger)hash {
+    return hash_json(_json, 0);
 }
 
 @end
