@@ -66,7 +66,7 @@ typedef NS_CLOSED_ENUM(NSInteger, JCJSONType) {
 /// querying the structure or retrieving specific values.
 ///
 /// This class is marked as `final` in Swift, meaning it cannot be subclassed.
-NS_SWIFT_NAME(JSON)
+NS_SWIFT_NAME(JSON) NS_SWIFT_SENDABLE
 __attribute__((objc_subclassing_restricted))
 @interface JCJSON : NSObject
 
