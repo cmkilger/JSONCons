@@ -102,6 +102,23 @@ __attribute__((objc_subclassing_restricted))
 /// Unavailable. Use `initWithData:error:` to create an instance.
 - (nonnull instancetype)init NS_UNAVAILABLE;
 
+/// Initializes a `JCJSON` object with the provided value.
+///
+/// - Parameters:
+///  - value: The value to initialize the object with. This can be any valid JSON value, such as a `NSNull`, `NSString`, `NSNumber`, `NSArray`, or `NSDictionary`.
+///
+/// - Note: If an invalid type is encountered it will be replaced with a null value.
+- (nonnull instancetype)initWithValue:(nonnull id)value;
+
+/// Initializes a `JCJSON` object with the provided value and a date formatter.
+///
+/// - Parameters:
+///   - value: The value to initialize the object with. This can be any valid JSON value, such as a `NSNull`, `NSString`, `NSNumber`, `NSArray`, `NSDictionary`, or `NSDate`.
+///   - dateFormatter: An optional `NSDateFormatter` used to format any `NSDate` into a string representation.
+///
+/// - Note: If an invalid type is encountered it will be replaced with a null value, including `NSDate` if no `dateFormatter` is provided.
+- (nonnull instancetype)initWithValue:(nonnull id)value dateFormatter:(nullable NSDateFormatter *)dateFormatter;
+
 /// Initializes a `JCJSON` object with the provided JSON data.
 ///
 /// - Parameters:
