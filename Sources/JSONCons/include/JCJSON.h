@@ -198,6 +198,9 @@ __attribute__((objc_subclassing_restricted))
 ///            If the JSON structure is invalid or cannot be serialized, this method may return `nil`.
 - (nonnull NSData *)serializedData;
 
+/// Returns the size of the JSON structure.
+- (NSInteger)size;
+
 /// Queries the JSON structure using a JSONPath query string.
 ///
 /// This method allows you to extract one or more JSON values based on a JSONPath query string.

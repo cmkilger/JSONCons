@@ -270,6 +270,10 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
     }
 }
 
+- (NSInteger)size {
+    return static_cast<NSInteger>(_json.size());
+}
+
 - (NSData *)serializedData {
     std::string jsonString;
     _json.dump(jsonString);
