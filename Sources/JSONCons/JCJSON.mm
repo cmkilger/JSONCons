@@ -24,6 +24,55 @@ NSString * const JCJSONErrorDomain = @"JCJSONErrorDomain";
 
 @implementation JCJSON
 
+static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatter) {
+    if ([value isKindOfClass:[JCJSON class]]) {
+        return ((JCJSON *)value)->_json;
+    }
+    if ([value isKindOfClass:[NSNumber class]]) {
+        NSNumber *number = (NSNumber *)value;
+        if (strcmp([number objCType], @encode(BOOL)) == 0) {
+            return jsoncons::json(number.boolValue);
+        } else if (strcmp([number objCType], @encode(NSInteger)) == 0 || strcmp([number objCType], @encode(NSUInteger)) == 0) {
+            return jsoncons::json(number.integerValue);
+        } else if (strcmp([number objCType], @encode(double)) == 0) {
+            return jsoncons::json(number.doubleValue);
+        }
+    }
+    if ([value isKindOfClass:[NSString class]]) {
+        return jsoncons::json([value UTF8String]);
+    }
+    if ([value isKindOfClass:[NSArray class]]) {
+        jsoncons::json json(jsoncons::json_array_arg);
+        for (id item in value) {
+            json.push_back(convertValue(item, dateFormatter));
+        }
+        return json;
+    }
+    if ([value isKindOfClass:[NSDictionary class]]) {
+        jsoncons::json json;
+        for (NSString *key in value) {
+            json.insert_or_assign([key UTF8String], convertValue(value[key], dateFormatter));
+        }
+        return json;
+    }
+    if ([value isKindOfClass:[NSDate class]] && dateFormatter) {
+        return jsoncons::json([[dateFormatter stringFromDate:(NSDate *)value] UTF8String]);
+    }
+    return jsoncons::json::null();
+}
+
+- (instancetype)initWithValue:(id)value {
+    return [self initWithValue:value dateFormatter:nil];
+}
+
+- (instancetype)initWithValue:(id)value dateFormatter:(NSDateFormatter *)dateFormatter {
+    self = [super init];
+    if (self) {
+        self.json = convertValue(value, dateFormatter);
+    }
+    return self;
+}
+
 - (instancetype)initWithJSON:(jsoncons::json)json {
     self = [super init];
     if (self) {
