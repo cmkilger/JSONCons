@@ -201,6 +201,26 @@ __attribute__((objc_subclassing_restricted))
 /// Returns the size of the JSON structure.
 - (NSInteger)size;
 
+/// Gets the value for a specific index in the JSON array. The receiver must have `type` of `JCJSONTypeArray`.
+///
+/// - Parameter key: The key for which to retrieve the value.
+/// - Returns: The `JCJSON` object representing the value associated with the specified index. Returns `nil`
+///            if the index is out of bounds or if the JSON object is not an array.
+- (nullable JCJSON *)valueAtIndex:(NSInteger)index;
+
+/// Gets the value for a specific key in the JSON object. The receiver must have `type` of `JCJSONTypeObject`.
+///
+/// - Parameter key: The key for which to retrieve the value.
+/// - Returns: The `JCJSON` object representing the value associated with the specified key. Returns `nil` if
+///            the key does not exist or if the JSON object is not an object (dictionary).
+- (nullable JCJSON *)valueForKey:(nonnull NSString *)key;
+
+/// Gets the keys of the JSON object.  The receiver must have `type` of `JCJSONTypeObject`.
+///
+/// - Returns: An array of strings representing the keys in the JSON object. Returns `nil` if the JSON object
+///            is not of type `JCJSONTypeObject` or if there are no keys available.
+- (nullable NSArray<NSString *> *)keys;
+
 /// Queries the JSON structure using a JSONPath query string.
 ///
 /// This method allows you to extract one or more JSON values based on a JSONPath query string.
@@ -231,3 +251,6 @@ __attribute__((objc_subclassing_restricted))
 - (nullable JCJSON *)queryWithString:(nonnull NSString *)string error:(NSError * _Nullable * _Nullable)error NS_SWIFT_NAME(query(_:));
 
 @end
+
+
+
