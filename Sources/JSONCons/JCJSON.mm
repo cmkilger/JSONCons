@@ -274,7 +274,7 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
     return static_cast<NSInteger>(_json.size());
 }
 
-- (JCJSON *)valueForIndex:(NSInteger)index {
+- (JCJSON *)valueAtIndex:(NSInteger)index {
     if (index < 0 || index >= _json.size() || !_json.is_array()) {
         return nil;
     }
