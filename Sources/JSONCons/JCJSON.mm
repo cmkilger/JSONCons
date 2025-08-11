@@ -274,6 +274,41 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
     return static_cast<NSInteger>(_json.size());
 }
 
+- (JCJSON *)valueForIndex:(NSInteger)index {
+    if (index < 0 || index >= _json.size() || !_json.is_array()) {
+        return nil;
+    }
+    try {
+        const auto& jsonItem = _json.at(index);
+        return [[JCJSON alloc] initWithJSON:jsonItem];
+    } catch (const std::exception& e) {
+        return nil;
+    }
+}
+
+- (JCJSON *)valueForKey:(NSString *)key {
+    if (!_json.is_object()) {
+        return nil;
+    }
+    try {
+        const auto& jsonItem = _json.at(key.UTF8String);
+        return [[JCJSON alloc] initWithJSON:jsonItem];
+    } catch (const std::exception& e) {
+        return nil;
+    }
+}
+
+- (NSArray<NSString *> *)keys {
+    if (!_json.is_object()) {
+        return nil;
+    }
+    NSMutableArray *keysArray = [[NSMutableArray alloc] initWithCapacity:_json.size()];
+    for (const auto& item : _json.object_range()) {
+        [keysArray addObject:[NSString stringWithUTF8String:item.key().c_str()]];
+    }
+    return keysArray;
+}
+
 - (NSData *)serializedData {
     std::string jsonString;
     _json.dump(jsonString);
