@@ -20,7 +20,10 @@ let package = Package(
             ],
             cSettings: [
                 .headerSearchPath("jsoncons/include"),
-            ]
+            ],
+            linkerSettings: [
+                .linkedFramework("Foundation"),
+            ],
         ),
         .testTarget(
             name: "JSONConsTests",
