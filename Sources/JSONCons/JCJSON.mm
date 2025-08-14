@@ -20,12 +20,16 @@ NSString * const JCJSONErrorDomain = @"JCJSONErrorDomain";
 
 @property (nonatomic, assign) jsoncons::json json;
 
+@property (nonatomic, strong) id native;
+@property (nonatomic, strong) NSDateFormatter *dateFormatter;
+
 @end
 
 @implementation JCJSON
 
 static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatter) {
     if ([value isKindOfClass:[JCJSON class]]) {
+        [value loadJSON];
         return ((JCJSON *)value)->_json;
     }
     if ([value isKindOfClass:[NSNumber class]]) {
@@ -66,9 +70,15 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (instancetype)initWithValue:(id)value dateFormatter:(NSDateFormatter *)dateFormatter {
+    if ([value isKindOfClass:[JCJSON class]]) {
+        return value;
+    }
+    if ([value isKindOfClass:[NSArray class]] || [value isKindOfClass:[NSDictionary class]]) {
+        return [self initWithNativeValue:value dateFormatter:dateFormatter];
+    }
     self = [super init];
     if (self) {
-        self.json = convertValue(value, dateFormatter);
+        _json = convertValue(value, dateFormatter);
     }
     return self;
 }
@@ -76,7 +86,7 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 - (instancetype)initWithJSON:(jsoncons::json)json {
     self = [super init];
     if (self) {
-        self.json = json;
+        _json = json;
     }
     return self;
 }
@@ -88,7 +98,7 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
         std::size_t length = [data length];
         std::string jsonString(jsonBytes, length);
         try {
-            self.json = jsoncons::json::parse(jsonString);
+            _json = jsoncons::json::parse(jsonString);
         } catch (const std::exception& e) {
             if (error) {
                 NSString *errorDescription = [NSString stringWithFormat:@"Error parsing JSON: %s", e.what()];
@@ -105,7 +115,7 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
     self = [super init];
     if (self) {
         try {
-            self.json = jsoncons::json::parse([string UTF8String]);
+            _json = jsoncons::json::parse([string UTF8String]);
         } catch (const std::exception& e) {
             if (error) {
                 NSString *errorDescription = [NSString stringWithFormat:@"Error parsing JSON: %s", e.what()];
@@ -144,22 +154,44 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (nonnull instancetype)initWithArrayValue:(nonnull NSArray<JCJSON *> *)value {
-    jsoncons::json json(jsoncons::json_array_arg);
-    for (JCJSON *item in value) {
-        json.push_back(item->_json);
-    }
-    return [self initWithJSON:json];
+    return [self initWithNativeValue:value dateFormatter:nil];
 }
 
-- (nonnull instancetype)initWithObjectValue:(nonnull NSDictionary<NSString *, JCJSON *> *)value {
-    jsoncons::json json;
-    for (NSString *key in value) {
-        json.insert_or_assign([key UTF8String], value[key]->_json);
+- (nonnull instancetype)initWithObjectValue:(nonnull NSDictionary *)value {
+    return [self initWithNativeValue:value dateFormatter:nil];
+}
+
+- (nonnull instancetype)initWithNativeValue:(nonnull id)value dateFormatter:(nullable NSDateFormatter *)dateFormatter {
+    self = [self init];
+    if (self) {
+        _native = value;
+        _dateFormatter = dateFormatter;
     }
-    return [self initWithJSON:json];
+    return self;
 }
 
 - (JCJSONType)type {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSArray class]]) {
+            return JCJSONTypeArray;
+        } else if ([native isKindOfClass:[NSDictionary class]]) {
+            return JCJSONTypeObject;
+        } else if ([native isKindOfClass:[NSNull class]]) {
+            return JCJSONTypeNull;
+        } else if ([native isKindOfClass:[NSNumber class]]) {
+            NSNumber *number = (NSNumber *)native;
+            if (strcmp([number objCType], @encode(BOOL)) == 0) {
+                return JCJSONTypeBool;
+            } else if (strcmp([number objCType], @encode(NSInteger)) == 0 || strcmp([number objCType], @encode(NSUInteger)) == 0) {
+                return JCJSONTypeInteger;
+            } else if (strcmp([number objCType], @encode(double)) == 0) {
+                return JCJSONTypeDouble;
+            }
+        } else if ([native isKindOfClass:[NSString class]]) {
+            return JCJSONTypeString;
+        }
+    }
     switch (_json.type()) {
         case jsoncons::json_type::null_value:
             return JCJSONTypeNull;
@@ -182,6 +214,24 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (id)value {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSArray class]]) {
+            NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:[native count]];
+            for (id item in native) {
+                [result addObject:[[JCJSON alloc] initWithValue:item dateFormatter:_dateFormatter]];
+            }
+            return result;
+        } else if ([native isKindOfClass:[NSDictionary class]]) {
+            NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:[native count]];
+            for (NSString *key in native) {
+                result[key] = [[JCJSON alloc] initWithValue:native[key] dateFormatter:_dateFormatter];
+            }
+            return result;
+        } else {
+            return native;
+        }
+    }
     switch (_json.type()) {
         case jsoncons::json_type::null_value:
             return [NSNull null];
@@ -205,6 +255,10 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSNull *)nullValue {
+    id native = _native;
+    if (native) {
+        return [native isKindOfClass:[NSNull class]] ? native : nil;
+    }
     try {
         return _json.is_null() ? [NSNull null] : nil;
     } catch (const std::exception& e) {
@@ -213,6 +267,10 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (BOOL)booleanValue {
+    id native = _native;
+    if (native) {
+        return [native isKindOfClass:[NSNumber class]] ? [native boolValue] : NO;
+    }
     try {
         return _json.as_bool();
     } catch (const std::exception& e) {
@@ -221,6 +279,10 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSInteger)integerValue {
+    id native = _native;
+    if (native) {
+        return [native isKindOfClass:[NSNumber class]] ? [native integerValue] : 0;
+    }
     try {
         return _json.as_integer<NSInteger>();
     } catch (const std::exception& e) {
@@ -229,6 +291,10 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (double)doubleValue {
+    id native = _native;
+    if (native) {
+        return [native isKindOfClass:[NSNumber class]] ? [native doubleValue] : 0;
+    }
     try {
         return _json.as_double();
     } catch (const std::exception& e) {
@@ -237,6 +303,10 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSString *)stringValue {
+    id native = _native;
+    if (native) {
+        return [native isKindOfClass:[NSString class]] ? native : nil;
+    }
     try {
         return [[NSString alloc] initWithUTF8String:_json.as_cstring()];
     } catch (const std::exception& e) {
@@ -245,6 +315,17 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSArray<JCJSON *> *)arrayValue {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSArray class]]) {
+            NSMutableArray *result = [[NSMutableArray alloc] initWithCapacity:[native count]];
+            for (id item in native) {
+                [result addObject:[[JCJSON alloc] initWithValue:item dateFormatter:_dateFormatter]];
+            }
+            return result;
+        }
+        return nil;
+    }
     try {
         NSMutableArray *array = [[NSMutableArray alloc] initWithCapacity:_json.size()];
         for (const auto& jsonItem : _json.array_range()) {
@@ -257,6 +338,17 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSDictionary<NSString *, JCJSON *> *)objectValue {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSDictionary class]]) {
+            NSMutableDictionary *result = [[NSMutableDictionary alloc] initWithCapacity:[native count]];
+            for (NSString *key in native) {
+                result[key] = [[JCJSON alloc] initWithValue:native[key] dateFormatter:_dateFormatter];
+            }
+            return result;
+        }
+        return nil;
+    }
     try {
         NSMutableDictionary *object = [[NSMutableDictionary alloc] initWithCapacity:_json.size()];
         for (const auto& item : _json.object_range()) {
@@ -271,10 +363,29 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSInteger)size {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSArray class]]) {
+            return [native count];
+        } else if ([native isKindOfClass:[NSDictionary class]]) {
+            return [native count];
+        } else if ([native isKindOfClass:[NSNull class]]) {
+            return 0;
+        }
+    }
     return static_cast<NSInteger>(_json.size());
 }
 
 - (JCJSON *)valueAtIndex:(NSInteger)index {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSArray class]]) {
+            if (index >= 0 && index < [native count]) {
+                return [[JCJSON alloc] initWithValue:native[index] dateFormatter:_dateFormatter];
+            }
+        }
+        return nil;
+    }
     if (index < 0 || index >= _json.size() || !_json.is_array()) {
         return nil;
     }
@@ -287,6 +398,13 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (JCJSON *)valueForKey:(NSString *)key {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSDictionary class]]) {
+            return [[JCJSON alloc] initWithValue:native[key] dateFormatter:_dateFormatter];
+        }
+        return nil;
+    }
     if (!_json.is_object()) {
         return nil;
     }
@@ -299,6 +417,13 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSArray<NSString *> *)keys {
+    id native = _native;
+    if (native) {
+        if ([native isKindOfClass:[NSDictionary class]]) {
+            return [native allKeys];
+        }
+        return nil;
+    }
     if (!_json.is_object()) {
         return nil;
     }
@@ -310,6 +435,7 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 }
 
 - (NSData *)serializedData {
+    [self loadJSON];
     std::string jsonString;
     _json.dump(jsonString);
     NSString *nsJsonString = [[NSString alloc] initWithUTF8String:jsonString.c_str()];
@@ -318,6 +444,7 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
 
 - (JCJSON *)queryWithString:(NSString *)string error:(NSError **)error {
     try {
+        [self loadJSON];
         jsoncons::json result = jsoncons::jsonpath::json_query(_json, string.UTF8String);
         return [[JCJSON alloc] initWithJSON:result];
     } catch (const std::exception& e) {
@@ -330,10 +457,20 @@ static inline jsoncons::json convertValue(id value, NSDateFormatter *dateFormatt
     }
 }
 
+- (void)loadJSON {
+    if (_native) {
+        _json = convertValue(_native, _dateFormatter);
+        _native = nil;
+        _dateFormatter = nil;
+    }
+}
+
 - (BOOL)isEqual:(id)other {
     if (other == self) {
         return YES;
     } else if ([other isKindOfClass:[JCJSON class]]) {
+        [self loadJSON];
+        [other loadJSON];
         return _json == ((JCJSON *)other)->_json;
     } else {
         return NO;
@@ -405,6 +542,7 @@ static inline size_t hash_json(const jsoncons::json& j, int depth) {
 }
 
 - (NSUInteger)hash {
+    [self loadJSON];
     return hash_json(_json, 0);
 }
 
